@@ -34,8 +34,19 @@ export default Task.extend({
 
     // This allows for live reload of page when changes are made to repo.
     // https://webpack.github.io/docs/webpack-dev-server.html#inline-mode
-    let entryPoints = [`webpack-dev-server/client?http://${serveTaskOptions.host}:${serveTaskOptions.port}/`];
+    let entryPoints = [
+      `webpack-dev-server/client?http://${serveTaskOptions.host}:${serveTaskOptions.port}/`
+    ];
     if (serveTaskOptions.hmr) {
+      const webpackHmrLink = 'https://webpack.github.io/docs/hot-module-replacement.html';
+      ui.writeLine(oneLine`
+        ${chalk.yellow('NOTICE')} Hot Module Replacement (HMR) is enabled for the dev server.
+      `);
+      ui.writeLine('  The project will still live reload when HMR is enabled,');
+      ui.writeLine('  but to take advantage of HMR additional application code is required');
+      ui.writeLine('  (not included in an angular-cli project by default).');
+      ui.writeLine(`  See ${chalk.blue(webpackHmrLink)}`);
+      ui.writeLine('  for information on working with HMR for Webpack.');
       entryPoints.push('webpack/hot/dev-server');
       config.plugins.push(new webpack.HotModuleReplacementPlugin());
     }
@@ -104,17 +115,16 @@ export default Task.extend({
 
     const server = new WebpackDevServer(webpackCompiler, webpackDevServerConfiguration);
     return new Promise((resolve, reject) => {
-      server.listen(serveTaskOptions.port,
-                    `${serveTaskOptions.host}`,
-                    function(err: any, stats: any) {
+      server.listen(serveTaskOptions.port, `${serveTaskOptions.host}`, (err: any, stats: any) => {
         if (err) {
           console.error(err.stack || err);
           if (err.details) { console.error(err.details); }
           reject(err.details);
         } else {
-          const { open, host, port } = serveTaskOptions;
+          const { open, ssl, host, port } = serveTaskOptions;
           if (open) {
-            opn(url.format({ protocol: 'http', hostname: host, port: port.toString() }));
+            let protocol = ssl ? 'https' : 'http';
+            opn(url.format({ protocol: protocol, hostname: host, port: port.toString() }));
           }
         }
       });
